@@ -1,0 +1,25 @@
+.test-header{
+	width: 100%;
+	height: 60px;
+	background-color: antiquewhite;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.test-menu{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.test-menu-item{
+	padding-left: 15px;
+	letter-spacing: 2px;
+	
+}
+
+.test-menu-item router-link{
+	text-decoration: none;
+	color: aqua;
+}

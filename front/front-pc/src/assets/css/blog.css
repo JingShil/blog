@@ -1,0 +1,50 @@
+.blog-infinite-list {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.blog-infinite-list .blog-infinite-list-item {
+  display: flex;
+  height: 150px;
+  background: var(--el-color-primary-light-9);
+  margin: 10px;
+  color: var(--el-color-primary);
+}
+.blog-infinite-list .blog-infinite-list-item + .list-item {
+  margin-top: 10px;
+}
+
+.blog-infinite-list-item {
+  align-items: center;
+}
+
+.blog-article-imag{
+  height: 100%;
+  
+}
+
+.blog-main{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  margin-left: 10px;
+}
+
+.blog-article{
+  height: 80%;
+  width: 100%;
+}
+
+.blog-article h2{
+  height: 30px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.blog-detail{
+  height: 20%;
+  display: flex;
+  flex-direction: row;
+}
