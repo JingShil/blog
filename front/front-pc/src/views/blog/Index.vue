@@ -36,9 +36,11 @@
 <script setup>
 import { ref } from 'vue'
 const count = ref(20)
+let pageNumber = 1;
+let pageSize = 10;
 const load = () => {
 	// if(count.value < 20)
-  count.value += 1
+  pageSize+=10;
 }
 
 </script>

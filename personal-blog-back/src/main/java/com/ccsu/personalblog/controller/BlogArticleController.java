@@ -6,24 +6,29 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ccsu.personalblog.common.R;
-import com.ccsu.personalblog.entity.BlogArticle;
-import com.ccsu.personalblog.entity.CollectBlog;
-import com.ccsu.personalblog.entity.HistoryBlog;
-import com.ccsu.personalblog.entity.LikeBlog;
+import com.ccsu.personalblog.entity.*;
 import com.ccsu.personalblog.mapper.BlogArticleMapper;
-import com.ccsu.personalblog.service.BlogArticleService;
-import com.ccsu.personalblog.service.CollectBlogService;
-import com.ccsu.personalblog.service.HistoryBlogService;
-import com.ccsu.personalblog.service.LikeBlogService;
+import com.ccsu.personalblog.mapper.BlogImagMapper;
+import com.ccsu.personalblog.service.*;
 import com.ccsu.personalblog.utils.MD5Utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.*;
 
 import java.awt.print.Pageable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin
@@ -43,6 +48,17 @@ public class BlogArticleController {
 
     @Autowired
     private HistoryBlogService historyBlogService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private BlogImagMapper blogImagMapper;
+
+    @Autowired
+    private ResourceLoader resourceLoader;
+
+    private String imagPath = "D:\\图片1\\blog\\";
 
 
     @PostMapping("/add")
@@ -69,19 +85,58 @@ public class BlogArticleController {
         return R.success("修改成功");
     }
 
-    @PostMapping("listAll")
-    public R<List<BlogArticle>> listAll(int pageNumber, int pageSize) {
+    @PostMapping("list")
+    public R<List<Blog>> list(int pageNumber, int pageSize) {
         int offset = (pageNumber - 1) * pageSize;
         List<BlogArticle> blogArticles = blogArticleService.selectPageByUserId(null, offset, pageSize);
-        return R.success(blogArticles);
+        List<Blog> blogs = blogArticles.stream().map(blogArticle -> {
+            Blog blog = new Blog();
+            blog.setBlogArticle(blogArticle);
+            String userId = blogArticle.getUserId();
+            String id = blogArticle.getId();
+            LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(User::getId, userId);
+            User user = userService.getOne(queryWrapper);
+            LambdaQueryWrapper<BlogImag> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.eq(BlogImag::getBlogId, id);
+            BlogImag blogImag = blogImagMapper.selectOne(lambdaQueryWrapper);
+            Path path;
+            if(blogImag == null){
+                path = Paths.get("D:\\图片1\\blog\\28ae5ee1d925d.jpg");
+            }else {
+                path = Paths.get(imagPath + blogImag.getId());
+            }
+
+            byte[] imageBytes = new byte[0];
+            try {
+                imageBytes = Files.readAllBytes(path);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+            blog.setImag(base64Image);
+            blog.setName(user.getName());
+            blog.setUserId(user.getId());
+            return blog;
+        }).collect(Collectors.toList());
+        return R.success(blogs);
     }
 
-    @PostMapping("list")
-    public R<List<BlogArticle>> list(int pageNumber, int pageSize, String id) {
-        int offset = (pageNumber - 1) * pageSize;
-        List<BlogArticle> blogArticles = blogArticleService.selectPageByUserId(id, offset, pageSize);
-        return R.success(blogArticles);
-    }
+//    @PostMapping("list")
+//    public R<List<BlogArticleAndName>> list(int pageNumber, int pageSize, String id) {
+//        int offset = (pageNumber - 1) * pageSize;
+//        List<BlogArticle> blogArticles = blogArticleService.selectPageByUserId(id, offset, pageSize);
+//        List<BlogArticleAndName> blogArticleAndNames = blogArticles.stream().map(blogArticle -> {
+//            BlogArticleAndName blogArticleAndName = new BlogArticleAndName();
+//            blogArticleAndName.setBlogArticle(blogArticle);
+//            LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+//            lambdaQueryWrapper.eq(User::getId, blogArticle.getUserId());
+//            User one = userService.getOne(lambdaQueryWrapper);
+//            blogArticleAndName.setName(one.getName());
+//            return blogArticleAndName;
+//        }).collect(Collectors.toList());
+//        return R.success(blogArticleAndNames);
+//    }
 
     @PostMapping("/collect")
     public R<String> collect(@RequestBody Map<String, String> ids) {
@@ -143,7 +198,7 @@ public class BlogArticleController {
     }
 
     @PostMapping("/like/count")
-    public R<Long> liketCount(@RequestBody Map<String, String> ids) {
+    public R<Long> likeCount(@RequestBody Map<String, String> ids) {
         String blogId = ids.get("blogId");
         LambdaQueryWrapper<LikeBlog> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(LikeBlog::getBlogId, blogId);

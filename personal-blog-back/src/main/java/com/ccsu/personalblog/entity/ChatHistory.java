@@ -5,14 +5,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class BlogArticle {
+public class ChatHistory {
     private String id;
     private String userId;
-    private String title;
     private String text;
-    private LocalDateTime createTime;
     private LocalDateTime updateTime;
-    private Integer likeNum;
-    private Integer favoriteNum;
-    private Integer deleteFlag;
 }

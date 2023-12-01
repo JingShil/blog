@@ -3,33 +3,21 @@
 		<div class="layout-header">
 			<h1>哈哈</h1>
 			<div class="layout-menu">
-				<el-menu 
-					:default-active="activeIndex"
-					class="el-menu-demo"
-					mode="horizontal"
-					:ellipsis="false"
-					@select="handleSelect">
-					<el-menu-item index="1">
-						<!-- <router-link to="/blog" style="text-decoration: none;">博文</router-link> -->
-						<a href="/blog"></a>
-					</el-menu-item>
-					<el-menu-item index="2">
-						<router-link to="/test" style="text-decoration: none;">关注</router-link>
-					</el-menu-item>
-					<el-menu-item index="3">
-						<router-link to="/" style="text-decoration: none;">历史记录</router-link>
-					</el-menu-item>
-				</el-menu>
+				<div class="layout-menu-item" @click="handMenuItemChangeStyle(0)">
+					<router-link to="/">博文</router-link>
+				</div>
+				<div class="layout-menu-item" @click="handMenuItemChangeStyle(1)">
+					<router-link to="/">关注</router-link>
+				</div>
+				<div class="layout-menu-item" @click="handMenuItemChangeStyle(2)">
+					<router-link to="/">历史</router-link>
+				</div>
 			</div>
 			<div class="layout-search" style="display: flex;">
-				<el-input v-model="input" placeholder="Please input"/>
-				<div class="layout-search-button"  style="display: flex;">
-					<el-button type="primary">
-						<el-icon :size="size" :color="color">
-							<Search />
-						</el-icon>
-					</el-button>
-				</div>
+				<input placeholder="请输入"/>
+				<button>
+					<el-icon><Search /></el-icon>
+				</button>
 			</div>
 			<div class="layout-avatar">
 				<el-dropdown>
@@ -60,22 +48,35 @@
 <script>
 import { defineComponent, ref } from 'vue';
 
-
 export default defineComponent({
-  components: {
-    
-  },
   setup() {
     const count = ref(20);
+    const activeHandIndex = ref(0);
+
     const load = () => {
       count.value += 1;
     };
+
+    const handMenuItemChangeStyle = (index) => {
+      let layout_menu_item = document.getElementsByClassName('layout-menu-item')[index];
+      layout_menu_item.classList.add('layout-menu-item-focus');
+			if(activeHandIndex.value != index){
+				let layout_menu_item_before = document.getElementsByClassName('layout-menu-item')[activeHandIndex.value];
+				layout_menu_item_before.classList.remove('layout-menu-item-focus');
+			}
+      activeHandIndex.value = index;
+    };
+
     return {
       count,
-      load
+      activeHandIndex,
+      load,
+      handMenuItemChangeStyle
     };
   }
 });
+
+
 </script>
 
 <style src="../../assets/css/layout.css" scoped>

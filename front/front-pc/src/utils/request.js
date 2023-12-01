@@ -31,16 +31,4 @@ axios.interceptors.request.use(
         return Promise.reject(error.response)
     })
 
-// // 路由响应拦截
-// axios.interceptors.response.use(
-//     response => {
-//         if (response.data.success === false) {
-//             return ElMessage.error(response.data.errDesc)
-//         } else {
-//             return response.data
-//         }
-//     },
-//     error => {
-//         return Promise.reject(error.response) // 返回接口返回的错误信息
-//     })
 export default axios

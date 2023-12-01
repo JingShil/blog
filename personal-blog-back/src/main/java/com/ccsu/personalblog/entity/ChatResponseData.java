@@ -12,21 +12,33 @@ public class ChatResponseData {
     private long created;
     private String model;
     private List<Choice> choices;
-
+    private String system_fingerprint;
+    private Usage usage;
     // getters and setters
     @Data
     public static class Choice {
         private int index;
-        private Delta delta;
+        private Message message;
         private String finish_reason;
-
+        private Delta delta;
         // getters and setters
     }
     @Data
     public static class Delta {
         private String content;
-        private String role;
+//        private String role;
         // getters and setters
+    }
+
+    @Data
+    public static class Usage {
+        private Integer prompt_tokens;
+        private Integer completion_tokens;
+        private Integer total_tokens;
+        private Integer pre_token_count;
+        private Integer pre_total;
+        private Integer adjust_total;
+        private Integer final_total;
     }
 }
 

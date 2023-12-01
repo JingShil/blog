@@ -1,5 +1,6 @@
 package com.ccsu.personalblog.api;
 
+import com.ccsu.personalblog.common.WebSocket;
 import com.ccsu.personalblog.entity.ChatRequestData;
 import com.ccsu.personalblog.entity.ChatResponseData;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -12,22 +13,26 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import javax.annotation.Resource;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 
 public class ChatGptApi {
-    private int sum;
-    public void sendChatGpt(ChatRequestData chatRequestData) {
-        SseEmitter sseEmitter = chatRequestData.getSseEmitter();
+
+    @Resource
+    private WebSocket webSocket;
+
+
+    public ChatResponseData sendChatGpt(ChatRequestData chatRequestData) {
         try {
             //创建URL对象，使用HTTP POST方法请求JSON格式的数据
-            System.out.println(sseEmitter);
+
             HttpURLConnection cn = getHttpURLConnection();
             //设置要发送的JSON数据
-            String postDada = getPostDada(chatRequestData);
-
+//            String postDada = getPostDada(chatRequestData);
+            String postDada = new JSONObject(chatRequestData).toString();
             //将请求发给网站
             OutputStream outputStream = cn.getOutputStream();
             outputStream.write(postDada.getBytes());
@@ -36,28 +41,39 @@ public class ChatGptApi {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(cn.getInputStream()));
             String input;
             StringBuilder buffer = new StringBuilder();
-            sum = 0;
+
             ObjectMapper objectMapper = new ObjectMapper() ;
-            while((input = bufferedReader.readLine()) != null) {
-                input = input.replaceAll("^data:\\s*", "");
-                System.out.println(input);
-                try {
-                    ChatResponseData re = objectMapper.readValue(input, ChatResponseData.class);
-                    sseSend(sseEmitter, re);
-                    System.out.println(re);
-                } catch (JsonProcessingException e) {
-                    System.out.println("Invalid input format: " + input);
-                    continue;
-                    // 可以选择跳过该数据或进行其他处理
+            if(chatRequestData.isStream()) {
+                while ((input = bufferedReader.readLine()) != null) {
+                    input = input.replaceAll("^data:\\s*", "");
+                    System.out.println(input);
+                    try {
+                        ChatResponseData re = objectMapper.readValue(input, ChatResponseData.class);
+                        webSocket.sendMessage(input);
+                        System.out.println(re);
+                    } catch (JsonProcessingException e) {
+//                        System.out.println("Invalid input format: " + input);
+                        System.out.println("数据解析错误: " + e);
+                        continue;
+                        // 可以选择跳过该数据或进行其他处理
+                    }
                 }
+            }else{
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((input = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(input);
+                }
+                ChatResponseData re = objectMapper.readValue(stringBuilder.toString(), ChatResponseData.class);
+                return re;
             }
             bufferedReader.close();
             cn.disconnect();
         } catch (Exception e) {
             System.out.println(e);
         }
-        sseEmitter.complete();
+        return null;
     }
+
 
 
     /**
@@ -83,19 +99,6 @@ public class ChatGptApi {
      */
 
 
-    /**
-     * 将消息发送给前端
-     * @param sseEmitter
-     * @param chatResponseData
-     */
-    private static void sseSend(SseEmitter sseEmitter, ChatResponseData chatResponseData) {
-        try {
-            sseEmitter.send(SseEmitter.event().name("message").data(chatResponseData));
-        } catch (IOException e) {
-            sseEmitter.complete();
-            throw new RuntimeException(e);
-        }
-    }
 
     /**
      * 设置请求头
@@ -103,15 +106,12 @@ public class ChatGptApi {
      * @return
      */
     private static String getPostDada(ChatRequestData chatRequestData) {
-
+//        JSONObject test = new JSONObject(chatRequestData);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("model", chatRequestData.getModel());
-        JSONArray jsonArray = new JSONArray();
-        JSONObject jsonObject1 = new JSONObject();
-        jsonObject1.put("role", chatRequestData.getRole());
-        jsonObject1.put("content", chatRequestData.getContent());
-        jsonArray.put(jsonObject1);
-        jsonObject.put("messages", jsonArray);
+//        JSONArray jsonArray = new JSONArray();
+//        jsonArray.put(chatRequestData.getMessages());
+        jsonObject.put("messages", chatRequestData.getMessages());
         jsonObject.put("max_tokens", 200);
         jsonObject.put("stream", chatRequestData.isStream());
 
